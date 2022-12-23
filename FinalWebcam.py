@@ -7,6 +7,13 @@ import math
 prev = [1,2]
 font = cv2.FONT_HERSHEY_SIMPLEX
 cap = cv2.VideoCapture(0)
+maxx = 0
+maxy = 0
+maxr = 0
+i = 0
+j = i 
+dist = 0
+trajectory = [(0,0)]
 #Set Width and Height 
 # cap.set(3,1280)
 # cap.set(4,720)
@@ -29,27 +36,6 @@ gray = cv2.erode(gray,kernel,iterations = 1)
 gray = cv2.dilate(gray,kernel,iterations = 1)
 	# gray = dilation
 
-	
-	# detect circles in the image
-circles = cv2.HoughCircles(gray, 
-                   cv2.HOUGH_GRADIENT, 1, 20, param1 = 40,
-               param2 = 30, minRadius = 10, maxRadius = 30)
-	
-if circles is not None:
-	circles = np.round(circles[0, :]).astype("int")
-		
-	for (x, y, r) in circles:
-		# draw the circle in the output image, then draw a rectangle in the image
-		# corresponding to the center of the circle
-		cv2.circle(output, (x, y), r, (0, 255, 0), 4)
-		cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
-		
-		prevx = x
-		prevy = y
-		prev = [prevx,prevy]
-
-
-
 while(True):
 
 	ret, frame = cap.read()
@@ -70,38 +56,50 @@ while(True):
 	gray = cv2.dilate(gray,kernel,iterations = 1)
 	# gray = dilation
 
-	
-	# detect circles in the image
 	circles = cv2.HoughCircles(gray, 
                    cv2.HOUGH_GRADIENT, 1, 20, param1 = 40,
                param2 = 30, minRadius = 10, maxRadius = 30)
 	
 	if circles is not None:
 		circles = np.round(circles[0, :]).astype("int")
-		
+		maxr = 0
 		for (x, y, r) in circles:
-			# draw the circle in the output image, then draw a rectangle in the image
-			# corresponding to the center of the circle
-			cv2.circle(output, (x, y), r, (0, 255, 0), 4)
+			if(r>maxr): 
+				maxr = r
+				maxx = x
+				maxy = y
+		if(i>1 and (abs(trajectory[1][0] - maxx) < 5) and (abs(trajectory[1][1]-maxy) < 5)):
+			print("STARTING POINT")
+			print(dist/((i-j)*0.1))
+			#j = i 
+			#dist = 0
+		#else :
+			#i = i + 1
+		i = i + 1
+
+		trajectory.append((maxx,maxy))
+		if(i>2):
+			dist += math.dist(trajectory[i-1],trajectory[i])
+		for (x,y) in trajectory:
 			cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
-			coordi = [x,y]
-			speed = math.dist(prev,coordi)/0.05
-			prev = coordi
-			cv2.putText(frame, 
-                str(speed), 
-                (50, 50), 
-                font, 1, 
-                (0, 255, 255), 
-                2, 
-                cv2.LINE_4)
-			time.sleep(0.05)
+			#coordi = [x,y]
+			#speed = math.dist(prev,coordi)/0.05
+			#prev = coordi
+			#cv2.putText(frame, 
+                #str(speed), 
+                #(50, 50), 
+                #font, 1, 
+                #(0, 255, 255), 
+                #2, 
+                #cv2.LINE_4)
+		time.sleep(0.1)
 			
-			print ("Coordinates of centre: ")
-			print(x,y)
-			print ("Radius is: ")
-			print (r)
-			print("Speed: ")
-			print(speed)
+		print ("Coordinates of centre: ")
+		print(maxx,maxy)
+		print ("Radius is: ")
+		print (maxr)
+		#	print("Speed: ")
+		#	print(speed)
 
 	cv2.imshow('gray',gray)
 	cv2.imshow('frame',output)
